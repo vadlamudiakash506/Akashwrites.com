@@ -1,0 +1,323 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Akash — Articles & Notes</title>
+  <meta name="description" content="Personal blog to publish articles about data analytics, projects, and learning notes." />
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Small extra styles for readable article content */
+    .prose img{max-width:100%;height:auto;border-radius:0.5rem}
+    .max-width-article{max-width:900px}
+    /* simple fade-in for article list */
+    .fade-up{opacity:0;transform:translateY(8px);animation:fadeUp .4s forwards}
+    @keyframes fadeUp{to{opacity:1;transform:none}}
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased">
+  <header class="bg-white border-b">
+    <div class="container mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="#/" class="flex items-center gap-3">
+        <div class="w-10 h-10 flex items-center justify-center rounded-md bg-pink-500 text-white font-bold">AR</div>
+        <div class="hidden sm:block">
+          <h1 class="text-lg font-bold">Akash — Articles</h1>
+          <p class="text-xs text-slate-500">Data, dashboards & notes</p>
+        </div>
+      </a><nav class="flex items-center gap-4">
+    <input id="search" type="search" placeholder="Search articles..." class="hidden sm:inline-block border rounded-md px-3 py-1 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-pink-300" />
+    <a href="#/about" class="text-sm text-slate-600 hover:text-slate-900">About</a>
+    <a id="new-post-btn" href="#/compose" class="text-sm bg-pink-500 text-white px-3 py-1 rounded-md shadow-sm hover:opacity-95">New Post</a>
+  </nav>
+</div>
+
+  </header>  <main class="container mx-auto px-6 py-10">
+    <!-- Views mount here -->
+    <div id="app"></div>
+  </main>  <footer class="border-t bg-white">
+    <div class="container mx-auto px-6 py-6 text-sm text-slate-600 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <div>© <span id="year"></span> Akash — Built with ❤️</div>
+      <div class="flex items-center gap-3">
+        <a href="#/rss" class="hover:underline">RSS</a>
+        <a href="#/privacy" class="hover:underline">Privacy</a>
+      </div>
+    </div>
+  </footer>  <template id="home-template">
+    <section>
+      <div class="mb-8 flex items-center justify-between gap-4">
+        <div>
+          <h2 class="text-3xl font-bold">Latest articles</h2>
+          <p class="text-slate-500 mt-1">Thoughts on data, dashboards, and learning by Akash.</p>
+        </div>
+        <div class="sm:hidden">
+          <button id="mobile-search-toggle" class="text-slate-600">Search</button>
+        </div>
+      </div><div id="tags" class="flex gap-2 mb-6 flex-wrap"></div>
+
+  <div id="articles-list" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+</section>
+
+  </template>  <template id="article-card-template">
+    <article class="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition fade-up">
+      <a class="title-link block">
+        <h3 class="text-xl font-semibold mb-2"></h3>
+      </a>
+      <div class="text-sm text-slate-500 mb-3 meta"></div>
+      <p class="text-slate-700 excerpt mb-4"></p>
+      <div class="flex items-center gap-3">
+        <div class="text-xs text-slate-500 tags"></div>
+        <div class="ml-auto">
+          <a class="read-more text-pink-600 text-sm font-medium">Read →</a>
+        </div>
+      </div>
+    </article>
+  </template>  <template id="article-view-template">
+    <article class="bg-white p-8 rounded-lg shadow-sm max-width-article mx-auto prose">
+      <div class="mb-4 text-slate-500 text-sm meta"></div>
+      <h2 class="text-3xl font-bold mb-2"></h2>
+      <div class="content"></div>
+      <div class="mt-8 border-t pt-4 text-sm text-slate-600">Tags: <span class="tags"></span></div>
+    </article>
+  </template>  <template id="about-template">
+    <section class="bg-white p-8 rounded-lg shadow-sm max-width-article mx-auto prose">
+      <h2>About Akash</h2>
+      <p>Hi — I'm Akash. I write about data analytics, dashboards, and projects. This site is a simple static blog you can edit and deploy anywhere.</p>
+      <p>Contact: <a href="mailto:akash@example.com">akash@example.com</a></p>
+    </section>
+  </template>  <template id="compose-template">
+    <section class="bg-white p-6 rounded-lg shadow-sm max-width-article mx-auto">
+      <h2 class="text-2xl font-bold mb-4">Compose new article (local only)</h2>
+      <form id="compose-form" class="space-y-4">
+        <div>
+          <label class="block text-sm text-slate-600">Title</label>
+          <input id="compose-title" class="w-full border rounded px-3 py-2" required />
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600">Tags (comma separated)</label>
+          <input id="compose-tags" class="w-full border rounded px-3 py-2" />
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600">Markdown content</label>
+          <textarea id="compose-body" rows="12" class="w-full border rounded px-3 py-2 font-mono"></textarea>
+        </div>
+        <div class="flex gap-3">
+          <button class="bg-pink-500 text-white px-4 py-2 rounded" type="submit">Save (local)</button>
+          <button id="cancel-compose" type="button" class="border px-4 py-2 rounded">Cancel</button>
+        </div>
+      </form>
+      <p class="text-xs text-slate-500 mt-3">Notes: This demo saves posts to your browser's localStorage. To publish, you'll commit files to your hosting platform or copy the article HTML/MD into your CMS.</p>
+    </section>
+  </template>  <script>
+    // ---------- Sample articles data ----------
+    const sampleArticles = [
+      {
+        id: 'how-to-pbi-palette',
+        title: 'Power BI: Pink dashboard color palette',
+        date: '2025-10-02',
+        tags: ['powerbi','visualization','colors'],
+        excerpt: 'A simple guide to choose and apply a pink color palette for a dashboard in Power BI, including accessible contrasts and HEX values.',
+        contentMarkdown: `
+### Why color matters
+
+Colors guide attention and convey meaning. Here is a starter palette:\n\n- Primary: #ec4899\n- Accent: #f472b6\n- Background: #fff7fb\n\nUse contrast-checking tools to ensure readability.
+`
+      },
+      {
+        id: 'sql-practice-ideas',
+        title: 'SQL practice questions to level up',
+        date: '2025-09-30',
+        tags: ['sql','practice','learning'],
+        excerpt: 'A set of practice questions and datasets to build your SQL skills — joins, window functions, grouping, and analytics exercises.',
+        contentMarkdown: `
+Start with these challenge types:\n\n1. Filtering and aggregates\n2. Window functions\n3. Complex joins\n\nExample: Find employees in the top 10% of salary per department.
+`
+      },
+      {
+        id: 'create-portfolio',
+        title: 'How I built my portfolio website',
+        date: '2025-10-01',
+        tags: ['portfolio','web','projects'],
+        excerpt: 'Step-by-step notes on creating a personal portfolio website — structure, sections, and deployment tips.',
+        contentMarkdown: `
+Sections to include:\n- Hero\n- Projects\n- Blog/Articles\n- Contact\n
+Deploy to GitHub Pages or Vercel for free hosting.
+`
+      }
+    ];
+
+    // ---------- Utilities ----------
+    const mdToHtml = (md) => {
+      // Very small markdown -> html converter: headings, lists, paragraphs, code (not full-featured)
+      return md
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        .replace(/\n\n+/g, '</p><p>')
+        .replace(/\n- /g, '\n<li>')
+        .replace(/<p>\n<li>/g, '<ul><li>')
+        .replace(/\n\n/g,'</p><p>')
+        .replace(/\n/g, '<br/>');
+    };
+
+    const formatDate = (iso) => new Date(iso).toLocaleDateString(undefined, {year:'numeric', month:'short', day:'numeric'});
+
+    // ---------- App state ----------
+    const STORAGE_KEY = 'akash_blog_articles_v1';
+    let articles = [];
+
+    function loadArticles(){
+      const fromStorage = localStorage.getItem(STORAGE_KEY);
+      if(fromStorage){
+        try{articles = JSON.parse(fromStorage);}catch(e){articles = sampleArticles;}
+      } else {
+        articles = sampleArticles.slice();
+      }
+    }
+
+    function saveArticles(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(articles));
+    }
+
+    // ---------- Routing ----------
+    function route(){
+      const hash = location.hash.replace('#','') || '/';
+      const [path, maybeId] = hash.split('/').filter(Boolean);
+      if(!path) return renderHome();
+      if(path === 'article' && maybeId) return renderArticle(maybeId);
+      if(path === 'about') return renderAbout();
+      if(path === 'compose') return renderCompose();
+      return renderHome();
+    }
+
+    // ---------- Render functions ----------
+    function renderHome(){
+      const tpl = document.getElementById('home-template');
+      const mount = document.getElementById('app');
+      mount.innerHTML = '';
+      mount.appendChild(tpl.content.cloneNode(true));
+
+      const list = document.getElementById('articles-list');
+      const tagsContainer = document.getElementById('tags');
+      const uniqueTags = new Set();
+      articles.forEach(a=>a.tags.forEach(t=>uniqueTags.add(t)));
+
+      // tags
+      tagsContainer.innerHTML = '';
+      const allBtn = document.createElement('button');
+      allBtn.className = 'text-sm px-3 py-1 border rounded text-slate-700';
+      allBtn.textContent = 'All';
+      allBtn.onclick = ()=>{ renderHomeFiltered(null); }
+      tagsContainer.appendChild(allBtn);
+      for(const t of uniqueTags){
+        const btn = document.createElement('button');
+        btn.className = 'text-sm px-3 py-1 border rounded text-slate-600';
+        btn.textContent = t;
+        btn.onclick = ()=>{ renderHomeFiltered(t); }
+        tagsContainer.appendChild(btn);
+      }
+
+      renderHomeFiltered();
+
+      const searchInput = document.getElementById('search');
+      if(searchInput){
+        searchInput.value = '';
+        searchInput.oninput = (e) => renderHomeFiltered(null, e.target.value);
+      }
+
+      // mobile search toggle
+      const mToggle = document.getElementById('mobile-search-toggle');
+      if(mToggle){
+        mToggle.onclick = ()=>{ const s = document.getElementById('search'); s.classList.toggle('hidden'); s.focus(); }
+      }
+
+      function renderHomeFiltered(tag=null, q=''){
+        list.innerHTML = '';
+        let filtered = articles.slice().sort((a,b)=> new Date(b.date)-new Date(a.date));
+        if(tag) filtered = filtered.filter(a=>a.tags.includes(tag));
+        if(q) filtered = filtered.filter(a=> (a.title+a.excerpt+(a.tags||[]).join(' ')).toLowerCase().includes(q.toLowerCase()));
+
+        for(const a of filtered){
+          const cardTpl = document.getElementById('article-card-template');
+          const node = cardTpl.content.cloneNode(true);
+          node.querySelector('h3').textContent = a.title;
+          node.querySelector('.excerpt').textContent = a.excerpt;
+          node.querySelector('.meta').textContent = formatDate(a.date);
+          node.querySelector('.tags').textContent = a.tags.map(t=>'#'+t).join(' ');
+          node.querySelector('.title-link').href = '#/article/'+a.id;
+          node.querySelector('.read-more').onclick = ()=> location.hash = '#/article/'+a.id;
+          list.appendChild(node);
+        }
+
+      }
+    }
+
+    function renderArticle(id){
+      const a = articles.find(x=>x.id===id);
+      const mount = document.getElementById('app');
+      if(!a){ mount.innerHTML = '<div class="text-center p-8">Article not found</div>'; return; }
+      const tpl = document.getElementById('article-view-template');
+      mount.innerHTML = '';
+      const node = tpl.content.cloneNode(true);
+      node.querySelector('h2').textContent = a.title;
+      node.querySelector('.meta').textContent = formatDate(a.date);
+      node.querySelector('.content').innerHTML = mdToHtml(a.contentMarkdown || '');
+      node.querySelector('.tags').textContent = a.tags.join(', ');
+      mount.appendChild(node);
+      window.scrollTo(0,0);
+    }
+
+    function renderAbout(){
+      const tpl = document.getElementById('about-template');
+      const mount = document.getElementById('app');
+      mount.innerHTML = '';
+      mount.appendChild(tpl.content.cloneNode(true));
+    }
+
+    function renderCompose(){
+      const tpl = document.getElementById('compose-template');
+      const mount = document.getElementById('app');
+      mount.innerHTML = '';
+      mount.appendChild(tpl.content.cloneNode(true));
+
+      const form = document.getElementById('compose-form');
+      const title = document.getElementById('compose-title');
+      const tags = document.getElementById('compose-tags');
+      const body = document.getElementById('compose-body');
+      const cancel = document.getElementById('cancel-compose');
+
+      cancel.onclick = ()=> location.hash = '#/';
+
+      form.onsubmit = (e)=>{
+        e.preventDefault();
+        const id = title.value.toLowerCase().replace(/[^a-z0-9]+/g,'-') + '-' + Date.now().toString().slice(-4);
+        const newArticle = {
+          id, title: title.value, date: new Date().toISOString().slice(0,10), tags: tags.value.split(',').map(s=>s.trim()).filter(Boolean), excerpt: (body.value||'').slice(0,140), contentMarkdown: body.value
+        };
+        articles.unshift(newArticle);
+        saveArticles();
+        location.hash = '#/article/'+id;
+      };
+    }
+
+    // ---------- Init ----------
+    loadArticles();
+    window.addEventListener('hashchange', route);
+    document.getElementById('year').textContent = new Date().getFullYear();
+    document.getElementById('new-post-btn').addEventListener('click', (e)=>{ /* handled by hash route */ });
+
+    // initial route
+    route();
+
+    // ---------- Tiny helpers: export & import ----------
+    // (Not exposed in UI, but useful if you want to copy data)
+    window._exportArticles = ()=> JSON.stringify(articles, null, 2);
+    window._importArticles = (json)=>{ try{ articles = JSON.parse(json); saveArticles(); alert('Imported'); location.hash = '#/'; }catch(e){ alert('Invalid JSON'); }}
+
+    // keyboard shortcut: press "c" to compose
+    document.addEventListener('keydown', (e)=>{ if(e.key==='c' && (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA')) location.hash = '#/compose'; });
+
+  </script></body>
+</html>
